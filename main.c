@@ -157,7 +157,7 @@ int main(void) {
 	}
 	printf("[");
 	for(i = 0; i < TEST_LENGTH_SAMPLES/2; i++) {
-		printf("%f.2, ", testOutput[i]);
+		printf("%f, ", testOutput[i]);
 	}
 	printf("]");
 	while(1);                             /* main function does not return */
