@@ -120,6 +120,7 @@ uint32_t refIndex = 213, testIndex = 0;
   * @retval None
   ***********************************************************************************************************/
 int main(void) {
+	u32 i = 0;
 	arm_status status;
 	float32_t maxValue;
 
@@ -151,9 +152,14 @@ int main(void) {
 	** ------------------------------------------------------------------- */
 
 	if( status != ARM_MATH_SUCCESS) {
+		printf("failed!\r\n");
 		while(1);
 	}
-
+	printf("[");
+	for(i = 0; i < TEST_LENGTH_SAMPLES/2; i++) {
+		printf("%f.2, ", testOutput[i]);
+	}
+	printf("]");
 	while(1);                             /* main function does not return */
 }
 
