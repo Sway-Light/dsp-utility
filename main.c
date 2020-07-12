@@ -90,7 +90,7 @@
 
 
 /* Private constants ---------------------------------------------------------------------------------------*/
-#define TEST_LENGTH_SAMPLES 2048
+#define TEST_LENGTH_SAMPLES 512
 
 /* Private function prototypes -----------------------------------------------------------------------------*/
 void NVIC_Configuration(void);
@@ -101,13 +101,15 @@ void GPIO_Configuration(void);
 /* -------------------------------------------------------------------
 * External Input and Output buffer Declarations for FFT Bin Example
 * ------------------------------------------------------------------- */
-extern float32_t testInput_f32_10khz[TEST_LENGTH_SAMPLES];
-static float32_t testOutput[TEST_LENGTH_SAMPLES/2];
+//extern float32_t testInput_f32_10khz[TEST_LENGTH_SAMPLES];
+float32_t InputSignal[TEST_LENGTH_SAMPLES];
+static float32_t OutputSignal[TEST_LENGTH_SAMPLES / 2];
+
 
 /* ------------------------------------------------------------------
 * Global variables for FFT Bin Example
 * ------------------------------------------------------------------- */
-uint32_t fftSize = 1024;
+uint32_t fftSize = 256;
 uint32_t ifftFlag = 0;
 uint32_t doBitReverse = 1;
 
@@ -132,17 +134,16 @@ int main(void) {
 	status = ARM_MATH_SUCCESS;
 
 	/* Process the data through the CFFT/CIFFT module */
-	arm_cfft_f32(&arm_cfft_sR_f32_len1024, testInput_f32_10khz, ifftFlag, doBitReverse);
+	arm_cfft_f32(&arm_cfft_sR_f32_len256, InputSignal, ifftFlag, doBitReverse);
 
 	/* Process the data through the Complex Magnitude Module for
 	calculating the magnitude at each bin */
-	arm_cmplx_mag_f32(testInput_f32_10khz, testOutput, fftSize);
+	arm_cmplx_mag_f32(InputSignal, OutputSignal, fftSize);
 
 	/* Calculates maxValue and returns corresponding BIN value */
-	arm_max_f32(testOutput, fftSize, &maxValue, &testIndex);
-	printf("max value = %f\r\n", maxValue);
+	arm_max_f32(OutputSignal, fftSize, &maxValue, &testIndex);
 	
-	if(testIndex !=  refIndex) {
+	if(testIndex != refIndex) {
 		status = ARM_MATH_TEST_FAILURE;
 	}
 
@@ -155,11 +156,9 @@ int main(void) {
 		printf("failed!\r\n");
 		while(1);
 	}
-	printf("[");
-	for(i = 0; i < TEST_LENGTH_SAMPLES/2; i++) {
-		printf("%f, ", testOutput[i]);
+	for(i = 0; i < TEST_LENGTH_SAMPLES / 2; i++) {
+		printf("%f, ", OutputSignal[i]);
 	}
-	printf("]");
 	while(1);                             /* main function does not return */
 }
 
