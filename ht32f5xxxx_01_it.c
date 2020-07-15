@@ -110,6 +110,33 @@ void SysTick_Handler(void)
 {
 }
 
+/*********************************************************************************************************//**
+ * @brief   This function handles ADC interrupt.
+ * @retval  None
+ ************************************************************************************************************/
+void ADC_IRQHandler(void) {
+	extern u32 gADC_Result;
+	extern vu32 gADC_CycleEndOfConversion;
+	if (ADC_GetIntStatus(HT_ADC0, ADC_INT_SINGLE_EOC) == SET) {
+		ADC_ClearIntPendingBit(HT_ADC0, ADC_FLAG_SINGLE_EOC);
+	}
+
+	if (ADC_GetIntStatus(HT_ADC0, ADC_INT_CYCLE_EOC) == SET) {
+		ADC_ClearIntPendingBit(HT_ADC0, ADC_FLAG_CYCLE_EOC);
+		gADC_CycleEndOfConversion = TRUE;
+		gADC_Result = (HT_ADC0->DR[0] & 0x0FFF) - 2048;
+	}
+}
+
+/*********************************************************************************************************//**
+ * @brief   This function handles GPTM interrupt.
+ * @retval  None
+ ************************************************************************************************************/
+void GPTM0_IRQHandler(void) {
+	if (TM_GetIntStatus(HT_GPTM0, TM_INT_CH3CC) == SET) {
+		TM_ClearIntPendingBit(HT_GPTM0, TM_INT_CH3CC);
+	}
+}
 
 /**
   * @}

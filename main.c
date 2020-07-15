@@ -90,166 +90,35 @@
 
 
 /* Private constants ---------------------------------------------------------------------------------------*/
-#define TEST_LENGTH_SAMPLES 512
+#define TEST_LENGTH_SAMPLES 128
 
 /* Private function prototypes -----------------------------------------------------------------------------*/
 void NVIC_Configuration(void);
 void CKCU_Configuration(void);
 void GPIO_Configuration(void);
+void ADC_Configuration(void);
+void TM_Configuration(void);
 
+void ADC_MainRoutine(void);
 void RUN_FFT(void);
 
 /* Global variables ----------------------------------------------------------------------------------------*/
+s32 gADC_Result;
+vu32 gADC_CycleEndOfConversion;
 /* -------------------------------------------------------------------
 * External Input and Output buffer Declarations for FFT Bin Example
 * ------------------------------------------------------------------- */
 //extern float32_t testInput_f32_10khz[TEST_LENGTH_SAMPLES];
-float32_t InputSignal[TEST_LENGTH_SAMPLES] = {
-	0.089844,  0.000000, 0.359375,  0.000000,
-	0.414063,  0.000000, 0.257813,  0.000000,
-	-0.121094, 0.000000, -0.660156, 0.000000,
-	0.621094,  0.000000, -0.269531, 0.000000,
-	0.738281,  0.000000, -0.386719, 0.000000,
-	0.414063,  0.000000, -0.843750, 0.000000,
-	-0.074219, 0.000000, 0.699219,  0.000000,
-	-0.464844, 0.000000, 0.464844,  0.000000,
-	-0.476563, 0.000000, 0.714844,  0.000000,
-	0.078125,  0.000000, -0.355469, 0.000000,
-	-0.617188, 0.000000, -0.656250, 0.000000,
-	-0.480469, 0.000000, -0.121094, 0.000000,
-	0.425781,  0.000000, -0.812500, 0.000000,
-	0.078125,  0.000000, -0.910156, 0.000000,
-	0.210938,  0.000000, -0.566406, 0.000000,
-	0.660156,  0.000000, -0.093750, 0.000000,
-	-0.859375, 0.000000, 0.265625,  0.000000,
-	-0.675781, 0.000000, 0.277344,  0.000000,
-	-0.925781, 0.000000, -0.300781, 0.000000,
-	0.140625,  0.000000, 0.375000,  0.000000,
-	0.398438,  0.000000, 0.207031,  0.000000,
-	-0.160156, 0.000000, -0.722656, 0.000000,
-	0.527344,  0.000000, -0.378906, 0.000000,
-	0.609375,  0.000000, -0.531250, 0.000000,
-	0.265625,  0.000000, -0.984375, 0.000000,
-	-0.222656, 0.000000, 0.566406,  0.000000,
-	-0.585938, 0.000000, 0.343750,  0.000000,
-	-0.593750, 0.000000, 0.628906,  0.000000,
-	0.015625,  0.000000, -0.410156, 0.000000,
-	-0.644531, 0.000000, -0.640625, 0.000000,
-	-0.457031, 0.000000, -0.082031, 0.000000,
-	0.511719,  0.000000, -0.730469, 0.000000,
-	0.175781,  0.000000, -0.777344, 0.000000,
-	0.355469,  0.000000, -0.433594, 0.000000,
-	0.816406,  0.000000, 0.062500,  0.000000,
-	-0.734375, 0.000000, 0.406250,  0.000000,
-	-0.542969, 0.000000, 0.382813,  0.000000,
-	-0.855469, 0.000000, -0.253906, 0.000000,
-	0.179688,  0.000000, 0.406250,  0.000000,
-	0.375000,  0.000000, 0.187500,  0.000000,
-	-0.238281, 0.000000, -0.816406, 0.000000,
-	0.429688,  0.000000, -0.476563, 0.000000,
-	0.468750,  0.000000, -0.679688, 0.000000,
-	0.097656,  0.000000, 0.867188,  0.000000,
-	-0.378906, 0.000000, 0.421875,  0.000000,
-	-0.722656, 0.000000, 0.226563,  0.000000,
-	-0.703125, 0.000000, 0.539063,  0.000000,
-	-0.035156, 0.000000, -0.437500, 0.000000,
-	-0.632813, 0.000000, -0.636719, 0.000000,
-	-0.429688, 0.000000, -0.011719, 0.000000,
-	0.609375,  0.000000, -0.617188, 0.000000,
-	0.308594,  0.000000, -0.640625, 0.000000,
-	0.496094,  0.000000, -0.285156, 0.000000,
-	0.953125,  0.000000, 0.203125,  0.000000,
-	-0.593750, 0.000000, 0.542969,  0.000000,
-	-0.414063, 0.000000, 0.496094,  0.000000,
-	-0.753906, 0.000000, -0.191406, 0.000000,
-	0.226563,  0.000000, 0.406250,  0.000000,
-	0.375000,  0.000000, 0.144531,  0.000000,
-	-0.300781, 0.000000, -0.886719, 0.000000,
-	0.324219,  0.000000, -0.609375, 0.000000,
-	0.335938,  0.000000, -0.828125, 0.000000,
-	-0.042969, 0.000000, 0.707031,  0.000000,
-	-0.535156, 0.000000, 0.269531,  0.000000,
-	-0.867188, 0.000000, 0.113281,  0.000000,
-	-0.796875, 0.000000, 0.468750,  0.000000,
-	-0.097656, 0.000000, -0.476563, 0.000000,
-	-0.656250, 0.000000, -0.621094, 0.000000,
-	-0.375000, 0.000000, 0.039063,  0.000000,
-	0.675781,  0.000000, -0.523438, 0.000000,
-	0.425781,  0.000000, -0.511719, 0.000000,
-	0.652344,  0.000000, -0.132813, 0.000000,
-	-0.890625, 0.000000, 0.343750,  0.000000,
-	-0.453125, 0.000000, 0.675781,  0.000000,
-	-0.316406, 0.000000, 0.589844,  0.000000,
-	-0.664063, 0.000000, -0.132813, 0.000000,
-	0.234375,  0.000000, 0.382813,  0.000000,
-	0.355469,  0.000000, 0.089844,  0.000000,
-	-0.351563, 0.000000, -0.980469, 0.000000,
-	0.222656,  0.000000, -0.734375, 0.000000,
-	0.195313,  0.000000, -0.980469, 0.000000,
-	-0.195313, 0.000000, 0.558594,  0.000000,
-	-0.675781, 0.000000, 0.128906,  0.000000,
-	-0.992188, 0.000000, 0.003906,  0.000000,
-	-0.886719, 0.000000, 0.386719,  0.000000,
-	-0.140625, 0.000000, -0.507813, 0.000000,
-	-0.660156, 0.000000, -0.613281, 0.000000,
-	-0.335938, 0.000000, 0.132813,  0.000000,
-	0.765625,  0.000000, -0.406250, 0.000000,
-	0.535156,  0.000000, -0.371094, 0.000000,
-	0.792969,  0.000000, 0.027344,  0.000000,
-	-0.742188, 0.000000, 0.484375,  0.000000,
-	-0.312500, 0.000000, 0.792969,  0.000000,
-	-0.191406, 0.000000, 0.699219,  0.000000,
-	-0.578125, 0.000000, -0.078125, 0.000000,
-	0.289063,  0.000000, 0.390625,  0.000000,
-	0.324219,  0.000000, 0.050781,  0.000000,
-	-0.410156, 0.000000, 0.933594,  0.000000,
-	0.097656,  0.000000, -0.859375, 0.000000,
-	0.046875,  0.000000, 0.882813,  0.000000,
-	-0.351563, 0.000000, 0.421875,  0.000000,
-	-0.824219, 0.000000, -0.011719, 0.000000,
-	0.875000,  0.000000, -0.117188, 0.000000,
-	-0.984375, 0.000000, 0.316406,  0.000000,
-	-0.207031, 0.000000, -0.546875, 0.000000,
-	-0.660156, 0.000000, -0.574219, 0.000000,
-	-0.285156, 0.000000, 0.203125,  0.000000,
-	0.875000,  0.000000, -0.308594, 0.000000,
-	0.664063,  0.000000, -0.238281, 0.000000,
-	0.953125,  0.000000, 0.167969,  0.000000,
-	-0.578125, 0.000000, 0.640625,  0.000000,
-	-0.175781, 0.000000, 0.933594,  0.000000,
-	-0.074219, 0.000000, 0.769531,  0.000000,
-	-0.531250, 0.000000, -0.023438, 0.000000,
-	0.281250,  0.000000, 0.394531,  0.000000,
-	0.292969,  0.000000, 0.011719,  0.000000,
-	-0.472656, 0.000000, 0.859375,  0.000000,
-	-0.003906, 0.000000, -0.992188, 0.000000,
-	-0.093750, 0.000000, 0.730469,  0.000000,
-	-0.511719, 0.000000, 0.277344,  0.000000,
-	-0.964844, 0.000000, -0.152344, 0.000000,
-	0.757813,  0.000000, -0.246094, 0.000000,
-	0.917969,  0.000000, 0.253906,  0.000000,
-	-0.261719, 0.000000, -0.570313, 0.000000,
-	-0.664063, 0.000000, -0.542969, 0.000000,
-	-0.242188, 0.000000, 0.257813,  0.000000,
-	0.964844,  0.000000, -0.191406, 0.000000,
-	0.808594,  0.000000, -0.089844, 0.000000
-};
+float32_t InputSignal[TEST_LENGTH_SAMPLES];
 static float32_t OutputSignal[TEST_LENGTH_SAMPLES / 2];
 
 
 /* ------------------------------------------------------------------
 * Global variables for FFT Bin Example
 * ------------------------------------------------------------------- */
-uint32_t fftSize = 256;
+uint32_t fftSize = TEST_LENGTH_SAMPLES / 2;
 uint32_t ifftFlag = 0;
 uint32_t doBitReverse = 1;
-
-/* Reference index at which max energy of bin ocuurs */
-uint32_t refIndex = 213, testIndex = 0;
-
-u32 i = 0;
-arm_status status;
-float32_t maxValue;
 
 /* Global functions ----------------------------------------------------------------------------------------*/
 /*********************************************************************************************************//**
@@ -262,13 +131,18 @@ int main(void) {
 	GPIO_Configuration();               /* GPIO Related configuration                                         */
 	RETARGET_Configuration();           /* Retarget Related configuration                                     */
 
-	RUN_FFT();
+	ADC_Configuration();
+
+	TM_Configuration();
+
+	ADC_Cmd(HT_ADC0, ENABLE);
+
+	/* Enable TM which will trigger ADC start of conversion periodically                                      */
+	TM_Cmd(HT_GPTM0, ENABLE);
 	
-	for(i = 0; i < TEST_LENGTH_SAMPLES / 2; i++) {
-		if (i != 0 && i % 4 == 0) printf("\r\n");
-		printf("%f ", OutputSignal[i]);
+	while(1) {                             /* main function does not return */
+		ADC_MainRoutine();
 	}
-	while(1);                             /* main function does not return */
 }
 
 /*********************************************************************************************************//**
@@ -313,16 +187,120 @@ void GPIO_Configuration(void) {
 #endif
 }
 
+/*********************************************************************************************************//**
+  * @brief  ADC configuration.
+  * @retval None
+  ***********************************************************************************************************/
+void ADC_Configuration(void) {
+	{ /* Enable peripheral clock                                                                              */
+		CKCU_PeripClockConfig_TypeDef CKCUClock = {{ 0 }};
+		CKCUClock.Bit.AFIO = 1;
+		CKCUClock.Bit.ADC0 = 1;
+		CKCU_PeripClockConfig(CKCUClock, ENABLE);
+	}
+
+	/* Configure AFIO mode as ADC function                                                                    */
+	AFIO_GPxConfig(GPIO_PA, AFIO_PIN_6, AFIO_MODE_2);
+
+	{ /* ADC related settings                                                                                 */
+		/* CK_ADC frequency is set to (CK_AHB / 64)                                                             */
+		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV64);
+
+		/* One Shot mode, sequence length = 3                                                                   */
+		ADC_RegularGroupConfig(HT_ADC0, ONE_SHOT_MODE, 3, 0);
+
+		/* ADC conversion time = (Sampling time + Latency) / CK_ADC = (1.5 + ADST + 12.5) / CK_ADC              */
+		/* Set ADST = 36, sampling time = 1.5 + ADST                                                            */
+		#if (LIBCFG_ADC_SAMPLE_TIME_BY_CH)
+		// The sampling time is set by the last parameter of the function "ADC_RegularChannelConfig()".
+		#else
+		ADC_SamplingTimeConfig(HT_ADC0, 36);
+		#endif
+
+		/* Set ADC conversion sequence as channel n                                                             */
+		ADC_RegularChannelConfig(HT_ADC0, ADC_CH_6, 0, 36);
+
+		/* Set GPTM0 CH3O as ADC trigger source                                                                 */
+		ADC_RegularTrigConfig(HT_ADC0, ADC_TRIG_GPTM0_CH3O);
+	}
+
+	/* Enable ADC single/cycle end of conversion interrupt                                                    */
+	ADC_IntConfig(HT_ADC0, ADC_INT_SINGLE_EOC | ADC_INT_CYCLE_EOC, ENABLE);
+
+	/* Enable the ADC interrupts                                                                              */
+	NVIC_EnableIRQ(ADC0_IRQn);
+}
+
+/*********************************************************************************************************//**
+  * @brief  TM configuration.
+  * @retval None
+  ***********************************************************************************************************/
+void TM_Configuration(void) {
+	/* Configure GPTM0 channel 3 as PWM output mode used to trigger ADC start of conversion every 1 second    */
+
+	{ /* Enable peripheral clock                                                                              */
+		CKCU_PeripClockConfig_TypeDef CKCUClock = {{ 0 }};
+		CKCUClock.Bit.GPTM0 = 1;
+		CKCU_PeripClockConfig(CKCUClock, ENABLE);
+	}
+
+	{ /* Time base configuration                                                                              */
+		TM_TimeBaseInitTypeDef TimeBaseInit;
+		TimeBaseInit.Prescaler = (SystemCoreClock / 1000000) - 1; // GPTM Clock is 40K
+		TimeBaseInit.CounterReload = 5 - 1;
+		TimeBaseInit.RepetitionCounter = 0;
+		TimeBaseInit.CounterMode = TM_CNT_MODE_UP;
+		TimeBaseInit.PSCReloadTime = TM_PSC_RLD_IMMEDIATE;
+		TM_TimeBaseInit(HT_GPTM0, &TimeBaseInit);
+	}
+
+	{ /* Channel n output configuration                                                                       */
+		TM_OutputInitTypeDef OutInit;
+		OutInit.Channel = TM_CH_3;
+		OutInit.OutputMode = TM_OM_PWM2;
+		OutInit.Control = TM_CHCTL_ENABLE;
+		OutInit.ControlN = TM_CHCTL_DISABLE;
+		OutInit.Polarity = TM_CHP_NONINVERTED;
+		OutInit.PolarityN = TM_CHP_NONINVERTED;
+		OutInit.IdleState = MCTM_OIS_LOW;
+		OutInit.IdleStateN = MCTM_OIS_HIGH;
+		OutInit.Compare = 5 - 1;
+		OutInit.AsymmetricCompare = 0;
+		TM_OutputInit(HT_GPTM0, &OutInit);
+	}
+
+	TM_IntConfig(HT_GPTM0, TM_INT_CH3CC, ENABLE);
+	NVIC_EnableIRQ(GPTM0_IRQn);
+}
+
+void ADC_MainRoutine(void) {
+	static u16 i = 0;
+	s16 j = 0;
+	if (gADC_CycleEndOfConversion) {
+		if (i < TEST_LENGTH_SAMPLES) {
+			InputSignal[i] = ((float)gADC_Result) / 2048;
+			InputSignal[i + 1] = 0;
+			i += 2;
+			if (i == TEST_LENGTH_SAMPLES) {
+				RUN_FFT();
+				printf("\r");
+				for(j = 0; j < 64; j += 2) {
+					printf("%-4.0f ", OutputSignal[j]);
+				}
+				i = 0;
+			}
+		}
+		gADC_CycleEndOfConversion = FALSE;
+	}
+}
+
 void RUN_FFT(void) {
 	/* Process the data through the CFFT/CIFFT module */
-	arm_cfft_f32(&arm_cfft_sR_f32_len256, InputSignal, ifftFlag, doBitReverse);
+	arm_cfft_f32(&arm_cfft_sR_f32_len64, InputSignal, ifftFlag, doBitReverse);
 
 	/* Process the data through the Complex Magnitude Module for
 	calculating the magnitude at each bin */
 	arm_cmplx_mag_f32(InputSignal, OutputSignal, fftSize);
-
-	/* Calculates maxValue and returns corresponding BIN value */
-	arm_max_f32(OutputSignal, fftSize, &maxValue, &testIndex);
 }
 
 #if (HT32_LIB_DEBUG == 1)
