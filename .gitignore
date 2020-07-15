@@ -30,3 +30,4 @@ ht32f5xxxx_01_usbdconf.h
 ht32f5xxxx_conf.h
 system_ht32f0006.c
 *.DavidChen
+MDK_ARMv5/EventRecorderStub.scvd

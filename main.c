@@ -108,8 +108,9 @@ vu32 gADC_CycleEndOfConversion;
 /* -------------------------------------------------------------------
 * External Input and Output buffer Declarations for FFT Bin Example
 * ------------------------------------------------------------------- */
-//extern float32_t testInput_f32_10khz[TEST_LENGTH_SAMPLES];
-float32_t InputSignal[TEST_LENGTH_SAMPLES];
+bool sampleFlag = FALSE;
+s32 InputSignal[TEST_LENGTH_SAMPLES];
+float32_t fftData[TEST_LENGTH_SAMPLES];
 static float32_t OutputSignal[TEST_LENGTH_SAMPLES / 2];
 
 
@@ -119,6 +120,9 @@ static float32_t OutputSignal[TEST_LENGTH_SAMPLES / 2];
 uint32_t fftSize = TEST_LENGTH_SAMPLES / 2;
 uint32_t ifftFlag = 0;
 uint32_t doBitReverse = 1;
+
+u16 i = 0;
+s16 j = 0;
 
 /* Global functions ----------------------------------------------------------------------------------------*/
 /*********************************************************************************************************//**
@@ -140,8 +144,23 @@ int main(void) {
 	/* Enable TM which will trigger ADC start of conversion periodically                                      */
 	TM_Cmd(HT_GPTM0, ENABLE);
 	
+	printf("%6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s\r\n", 
+	"600", "1.23k", "1.86k", "2.49k", "3.12k", "3.75k", "4.38k", "5.01k", "5.64k", "6.27k", "6.90k",
+	"7.53k", "8.16k", "8.79k", "9.42k", "10.05k", "10.68k", "11.31k", "11.94k", "12.57k", "13.20k",
+	"13.83k", "14.46k", "15.09k", "15.72k", "16.35k", "16.98k", "17.61k", "18.24k", "18.87k", "19.50k");
+	
 	while(1) {                             /* main function does not return */
 		ADC_MainRoutine();
+		if (sampleFlag) {
+			for(j = 0; j < TEST_LENGTH_SAMPLES; j += 1) fftData[j] = ((float)InputSignal[j]) / 2048.0;
+			RUN_FFT();
+			printf("\r");
+			for(j = 1; j < 32; j += 1) {
+				printf("%6.0f ", OutputSignal[j]);
+			}
+			i = 0;
+			sampleFlag = FALSE;
+		}
 	}
 }
 
@@ -204,7 +223,7 @@ void ADC_Configuration(void) {
 
 	{ /* ADC related settings                                                                                 */
 		/* CK_ADC frequency is set to (CK_AHB / 64)                                                             */
-		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV64);
+		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV16);
 
 		/* One Shot mode, sequence length = 3                                                                   */
 		ADC_RegularGroupConfig(HT_ADC0, ONE_SHOT_MODE, 3, 0);
@@ -214,11 +233,11 @@ void ADC_Configuration(void) {
 		#if (LIBCFG_ADC_SAMPLE_TIME_BY_CH)
 		// The sampling time is set by the last parameter of the function "ADC_RegularChannelConfig()".
 		#else
-		ADC_SamplingTimeConfig(HT_ADC0, 36);
+		ADC_SamplingTimeConfig(HT_ADC0, 0);
 		#endif
 
 		/* Set ADC conversion sequence as channel n                                                             */
-		ADC_RegularChannelConfig(HT_ADC0, ADC_CH_6, 0, 36);
+		ADC_RegularChannelConfig(HT_ADC0, ADC_CH_6, 0, 0);
 
 		/* Set GPTM0 CH3O as ADC trigger source                                                                 */
 		ADC_RegularTrigConfig(HT_ADC0, ADC_TRIG_GPTM0_CH3O);
@@ -246,8 +265,8 @@ void TM_Configuration(void) {
 
 	{ /* Time base configuration                                                                              */
 		TM_TimeBaseInitTypeDef TimeBaseInit;
-		TimeBaseInit.Prescaler = (SystemCoreClock / 1000000) - 1; // GPTM Clock is 40K
-		TimeBaseInit.CounterReload = 5 - 1;
+		TimeBaseInit.Prescaler = (SystemCoreClock / 160000) - 1; // GPTM Clock is 40K
+		TimeBaseInit.CounterReload = 4 - 1;
 		TimeBaseInit.RepetitionCounter = 0;
 		TimeBaseInit.CounterMode = TM_CNT_MODE_UP;
 		TimeBaseInit.PSCReloadTime = TM_PSC_RLD_IMMEDIATE;
@@ -264,7 +283,7 @@ void TM_Configuration(void) {
 		OutInit.PolarityN = TM_CHP_NONINVERTED;
 		OutInit.IdleState = MCTM_OIS_LOW;
 		OutInit.IdleStateN = MCTM_OIS_HIGH;
-		OutInit.Compare = 5 - 1;
+		OutInit.Compare = 2 - 1;
 		OutInit.AsymmetricCompare = 0;
 		TM_OutputInit(HT_GPTM0, &OutInit);
 	}
@@ -274,21 +293,13 @@ void TM_Configuration(void) {
 }
 
 void ADC_MainRoutine(void) {
-	static u16 i = 0;
-	s16 j = 0;
 	if (gADC_CycleEndOfConversion) {
 		if (i < TEST_LENGTH_SAMPLES) {
-			InputSignal[i] = ((float)gADC_Result) / 2048;
+			InputSignal[i] = gADC_Result;
 			InputSignal[i + 1] = 0;
 			i += 2;
-			if (i == TEST_LENGTH_SAMPLES) {
-				RUN_FFT();
-				printf("\r");
-				for(j = 0; j < 64; j += 2) {
-					printf("%-4.0f ", OutputSignal[j]);
-				}
-				i = 0;
-			}
+		} else {
+			sampleFlag = TRUE;
 		}
 		gADC_CycleEndOfConversion = FALSE;
 	}
@@ -296,11 +307,11 @@ void ADC_MainRoutine(void) {
 
 void RUN_FFT(void) {
 	/* Process the data through the CFFT/CIFFT module */
-	arm_cfft_f32(&arm_cfft_sR_f32_len64, InputSignal, ifftFlag, doBitReverse);
+	arm_cfft_f32(&arm_cfft_sR_f32_len64, fftData, ifftFlag, doBitReverse);
 
 	/* Process the data through the Complex Magnitude Module for
 	calculating the magnitude at each bin */
-	arm_cmplx_mag_f32(InputSignal, OutputSignal, fftSize);
+	arm_cmplx_mag_f32(fftData, OutputSignal, fftSize);
 }
 
 #if (HT32_LIB_DEBUG == 1)
