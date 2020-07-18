@@ -27,6 +27,7 @@
 
 /* Includes ------------------------------------------------------------------------------------------------*/
 #include "ht32.h"
+#include "ws2812.h"
 
 /** @addtogroup HT32_Series_Peripheral_Examples HT32 Peripheral Examples
   * @{
@@ -125,6 +126,7 @@ void ADC_IRQHandler(void) {
 		ADC_ClearIntPendingBit(HT_ADC0, ADC_FLAG_CYCLE_EOC);
 		gADC_CycleEndOfConversion = TRUE;
 		gADC_Result = (HT_ADC0->DR[0] & 0x0FFF) - 2048;
+		gADC_Result *= 5;
 	}
 }
 
@@ -136,6 +138,13 @@ void GPTM0_IRQHandler(void) {
 	if (TM_GetIntStatus(HT_GPTM0, TM_INT_CH3CC) == SET) {
 		TM_ClearIntPendingBit(HT_GPTM0, TM_INT_CH3CC);
 	}
+}
+
+void GPTM1_IRQHandler(void) {
+	extern u16 i;
+	i = 0;
+	TM_ClearFlag(HT_GPTM1, TM_FLAG_UEV);
+	wsShow();
 }
 
 /**

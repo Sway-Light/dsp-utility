@@ -73,6 +73,7 @@
 
 #include "arm_math.h"
 #include "arm_const_structs.h"
+#include "ws2812.h"
 
 #include "_ht32_project_source.h"
 
@@ -96,6 +97,7 @@
 void NVIC_Configuration(void);
 void CKCU_Configuration(void);
 void GPIO_Configuration(void);
+void GPTM1_Configuration(void);
 void ADC_Configuration(void);
 void TM_Configuration(void);
 
@@ -121,6 +123,7 @@ uint32_t fftSize = TEST_LENGTH_SAMPLES / 2;
 uint32_t ifftFlag = 0;
 uint32_t doBitReverse = 1;
 
+u8 ws_white[3] = {255, 255, 255};
 u16 i = 0;
 s16 j = 0;
 
@@ -133,8 +136,10 @@ int main(void) {
 	NVIC_Configuration();               /* NVIC configuration                                                 */
 	CKCU_Configuration();               /* System Related configuration                                       */
 	GPIO_Configuration();               /* GPIO Related configuration                                         */
+	GPTM1_Configuration();
 	RETARGET_Configuration();           /* Retarget Related configuration                                     */
 
+	wsInit();
 	ADC_Configuration();
 
 	TM_Configuration();
@@ -144,12 +149,14 @@ int main(void) {
 	/* Enable TM which will trigger ADC start of conversion periodically                                      */
 	TM_Cmd(HT_GPTM0, ENABLE);
 	
-	printf("%6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s\r\n", 
-	"600", "1.23k", "1.86k", "2.49k", "3.12k", "3.75k", "4.38k", "5.01k", "5.64k", "6.27k", "6.90k",
-	"7.53k", "8.16k", "8.79k", "9.42k", "10.05k", "10.68k", "11.31k", "11.94k", "12.57k", "13.20k",
-	"13.83k", "14.46k", "15.09k", "15.72k", "16.35k", "16.98k", "17.61k", "18.24k", "18.87k", "19.50k");
+	printf("\r\n");
+	for(j = 0; j < 31; j++) printf("%5.2fk ", 0.6 + 0.63 * j);
+	printf("\r\n");
+	
+	wsBlinkAll(300);
 	
 	while(1) {                             /* main function does not return */
+		static u8 wsCount = 0;
 		ADC_MainRoutine();
 		if (sampleFlag) {
 			for(j = 0; j < TEST_LENGTH_SAMPLES; j += 1) fftData[j] = ((float)InputSignal[j]) / 2048.0;
@@ -157,6 +164,9 @@ int main(void) {
 			printf("\r");
 			for(j = 1; j < 32; j += 1) {
 				printf("%6.0f ", OutputSignal[j]);
+				if(j%4 == 0) {
+					wsSetColor(j/4, ws_white, (float)(OutputSignal[j]/35));
+				}
 			}
 			i = 0;
 			sampleFlag = FALSE;
@@ -170,6 +180,7 @@ int main(void) {
   ***********************************************************************************************************/
 void NVIC_Configuration(void) {
 	NVIC_SetVectorTable(NVIC_VECTTABLE_FLASH, 0x0);     /* Set the Vector Table base location at 0x00000000   */
+	NVIC_EnableIRQ(GPTM1_IRQn);
 }
 
 /*********************************************************************************************************//**
@@ -255,8 +266,6 @@ void ADC_Configuration(void) {
   * @retval None
   ***********************************************************************************************************/
 void TM_Configuration(void) {
-	/* Configure GPTM0 channel 3 as PWM output mode used to trigger ADC start of conversion every 1 second    */
-
 	{ /* Enable peripheral clock                                                                              */
 		CKCU_PeripClockConfig_TypeDef CKCUClock = {{ 0 }};
 		CKCUClock.Bit.GPTM0 = 1;
@@ -265,7 +274,7 @@ void TM_Configuration(void) {
 
 	{ /* Time base configuration                                                                              */
 		TM_TimeBaseInitTypeDef TimeBaseInit;
-		TimeBaseInit.Prescaler = (SystemCoreClock / 160000) - 1; // GPTM Clock is 40K
+		TimeBaseInit.Prescaler = (SystemCoreClock / 160000) - 1;
 		TimeBaseInit.CounterReload = 4 - 1;
 		TimeBaseInit.RepetitionCounter = 0;
 		TimeBaseInit.CounterMode = TM_CNT_MODE_UP;
@@ -290,6 +299,24 @@ void TM_Configuration(void) {
 
 	TM_IntConfig(HT_GPTM0, TM_INT_CH3CC, ENABLE);
 	NVIC_EnableIRQ(GPTM0_IRQn);
+}
+
+void GPTM1_Configuration(void) {
+	TM_TimeBaseInitTypeDef TimeBaseInit;
+	{ /* Enable peripheral clock                                                                              */
+		CKCU_PeripClockConfig_TypeDef CKCUClock = {{ 0 }};
+		CKCUClock.Bit.GPTM1 = 1;
+		CKCU_PeripClockConfig(CKCUClock, ENABLE);
+	}
+	TM_TimeBaseStructInit(&TimeBaseInit);                       // Init GPTM1 time-base
+	TimeBaseInit.CounterMode = TM_CNT_MODE_UP;                  // up count mode
+	TimeBaseInit.CounterReload = 36000;                  // interrupt in every 500us
+	TimeBaseInit.Prescaler = 5;
+	TimeBaseInit.PSCReloadTime = TM_PSC_RLD_IMMEDIATE;          // reload immediately
+	TM_TimeBaseInit(HT_GPTM1, &TimeBaseInit);                   // write the parameters into GPTM1
+	TM_ClearFlag(HT_GPTM1, TM_FLAG_UEV);                        // Clear Update Event Interrupt flag
+	TM_IntConfig(HT_GPTM1, TM_INT_UEV, ENABLE);                 // interrupt by GPTM update
+	TM_Cmd(HT_GPTM1, ENABLE);                                   // enable the counter 1
 }
 
 void ADC_MainRoutine(void) {
