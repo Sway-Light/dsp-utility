@@ -100,9 +100,12 @@ void GPIO_Configuration(void);
 void GPTM1_Configuration(void);
 void ADC_Configuration(void);
 void TM_Configuration(void);
+void wsUpdateMag(void);
 
 void ADC_MainRoutine(void);
 void RUN_FFT(void);
+
+void delay(u32 d);
 
 /* Global variables ----------------------------------------------------------------------------------------*/
 s32 gADC_Result;
@@ -115,13 +118,23 @@ s32 InputSignal[TEST_LENGTH_SAMPLES];
 float32_t fftData[TEST_LENGTH_SAMPLES];
 static float32_t OutputSignal[TEST_LENGTH_SAMPLES / 2];
 
-
 /* ------------------------------------------------------------------
 * Global variables for FFT Bin Example
 * ------------------------------------------------------------------- */
 uint32_t fftSize = TEST_LENGTH_SAMPLES / 2;
 uint32_t ifftFlag = 0;
 uint32_t doBitReverse = 1;
+
+const u8 WS_LED[72] = {
+	 7, 6, 5, 4, 3, 2, 1, 0,
+	 8, 9,10,11,12,13,14,15,
+	23,22,21,20,19,18,17,16,
+	24,25,26,27,28,29,30,31,
+	39,38,37,36,35,34,33,32,
+	40,41,42,43,44,45,46,47,
+	55,54,53,52,51,50,49,48,
+	56,57,58,59,60,61,62,63,
+	71,70,69,68,67,66,65,64};
 
 u8 ws_white[3] = {255, 255, 255};
 u16 i = 0;
@@ -153,7 +166,15 @@ int main(void) {
 	for(j = 0; j < 31; j++) printf("%5.2fk ", 0.6 + 0.63 * j);
 	printf("\r\n");
 	
-	wsBlinkAll(300);
+	//wsBlinkAll(300);
+	for(j = 0; j < WS_PIXEL; j++) {
+		wsSetColor(WS_LED[j], ws_white, 0.1);
+		delay(20000);
+	}
+	for(j = 0; j < WS_PIXEL; j++) {
+		wsSetColor(WS_LED[j], ws_white, 0);
+		delay(20000);
+	}
 	
 	while(1) {                             /* main function does not return */
 		static u8 wsCount = 0;
@@ -164,10 +185,11 @@ int main(void) {
 			printf("\r");
 			for(j = 1; j < 32; j += 1) {
 				printf("%6.0f ", OutputSignal[j]);
-				if(j%4 == 0) {
-					wsSetColor(j/4, ws_white, (float)(OutputSignal[j]/35));
-				}
+//				if(j%4 == 0) {
+//					wsSetColor(j/4, ws_white, (float)(OutputSignal[j]/35));
+//				}
 			}
+			wsUpdateMag();
 			i = 0;
 			sampleFlag = FALSE;
 		}
@@ -339,6 +361,33 @@ void RUN_FFT(void) {
 	/* Process the data through the Complex Magnitude Module for
 	calculating the magnitude at each bin */
 	arm_cmplx_mag_f32(fftData, OutputSignal, fftSize);
+}
+
+void wsUpdateMag(void) {
+	u8 i, j;
+	u8 level;
+	for(i = 1; i < 16; i += 1) {
+		if(i%2 == 0) {
+			if(OutputSignal[i] < 4) level = 1;
+			else if(OutputSignal[i] < 3) level = 2;
+			else if(OutputSignal[i] <6) level = 3;
+			else if(OutputSignal[i] <9) level = 4;
+			else if(OutputSignal[i] <12) level = 5;
+			else if(OutputSignal[i] <15) level = 6;
+			else if(OutputSignal[i] <18) level = 7;
+			else if(OutputSignal[i] <21) level = 8;
+			else level = 9;
+			
+			for(j = 0; j < 9; j++) {
+				if(j < level) wsSetColor(WS_LED[(i/2) + j*8], ws_white, 0.2);
+				else wsSetColor(WS_LED[(i/2) + j*8], ws_white, 0);
+			}
+		}
+	}
+}
+
+void delay(u32 d) {
+	while(d--);
 }
 
 #if (HT32_LIB_DEBUG == 1)
