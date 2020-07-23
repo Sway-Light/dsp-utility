@@ -126,7 +126,7 @@ void ADC_IRQHandler(void) {
 		ADC_ClearIntPendingBit(HT_ADC0, ADC_FLAG_CYCLE_EOC);
 		gADC_CycleEndOfConversion = TRUE;
 		gADC_Result = (HT_ADC0->DR[0] & 0x0FFF) - 2048;
-		gADC_Result *= 7;
+		gADC_Result *= 50;
 	}
 }
 

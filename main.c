@@ -177,13 +177,13 @@ int main(void) {
 	}
 	
 	while(1) {                             /* main function does not return */
-		static u8 wsCount = 0;
+//		static u8 wsCount = 0;
 		ADC_MainRoutine();
 		if (sampleFlag) {
-			for(j = 0; j < TEST_LENGTH_SAMPLES; j += 1) fftData[j] = ((float)InputSignal[j]) / 2048.0;
+			for (j = 0; j < TEST_LENGTH_SAMPLES; j += 1) fftData[j] = ((float)InputSignal[j]) / 2048.0;
 			RUN_FFT();
 			printf("\r");
-			for(j = 1; j < 32; j += 1) {
+			for (j = 1; j < 32; j += 1) {
 				printf("%6.0f ", OutputSignal[j]);
 //				if(j%4 == 0) {
 //					wsSetColor(j/4, ws_white, (float)(OutputSignal[j]/35));
@@ -212,7 +212,7 @@ void NVIC_Configuration(void) {
 void CKCU_Configuration(void) {
 #if 1
 	CKCU_PeripClockConfig_TypeDef CKCUClock = {{ 0 }};
-	CKCUClock.Bit.AFIO       = 1;
+	CKCUClock.Bit.AFIO = 1;
 	CKCU_PeripClockConfig(CKCUClock, ENABLE);
 #endif
 }
@@ -259,7 +259,7 @@ void ADC_Configuration(void) {
 		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV16);
 
 		/* One Shot mode, sequence length = 3                                                                   */
-		ADC_RegularGroupConfig(HT_ADC0, ONE_SHOT_MODE, 3, 0);
+		ADC_RegularGroupConfig(HT_ADC0, ONE_SHOT_MODE, 1, 0);
 
 		/* ADC conversion time = (Sampling time + Latency) / CK_ADC = (1.5 + ADST + 12.5) / CK_ADC              */
 		/* Set ADST = 36, sampling time = 1.5 + ADST                                                            */
@@ -377,21 +377,21 @@ void wsUpdateMag(void) {
 			{255, 80, 0},
 			{255, 0, 0}
 		};
-	for(i = 1; i < 16; i += 1) {
-		if(i%2 == 0) {
-			if(OutputSignal[i] < 3) 		 level = 1;
-			else if(OutputSignal[i] <5)  level = 2;
-			else if(OutputSignal[i] <8)  level = 3;
-			else if(OutputSignal[i] <11) level = 4;
-			else if(OutputSignal[i] <14) level = 5;
-			else if(OutputSignal[i] <17) level = 6;
-			else if(OutputSignal[i] <20) level = 7;
-			else if(OutputSignal[i] <23) level = 8;
+	for (i = 1; i < 16; i += 1) {
+		if(i % 2 == 0) {
+			if (OutputSignal[i] < 3) level = 1;
+			else if(OutputSignal[i] < 5) level = 2;
+			else if(OutputSignal[i] < 8) level = 3;
+			else if(OutputSignal[i] < 11) level = 4;
+			else if(OutputSignal[i] < 14) level = 5;
+			else if(OutputSignal[i] < 17) level = 6;
+			else if(OutputSignal[i] < 20) level = 7;
+			else if(OutputSignal[i] < 23) level = 8;
 			else level = 9;
 			
-			for(j = 0; j < 9; j++) {
-				if(j < level) wsSetColor(WS_LED[(i/2) + j*8], color[j], 0.2);
-				else wsSetColor(WS_LED[(i/2) + j*8], color[j], 0);
+			for (j = 0; j < 9; j++) {
+				if (j < level) wsSetColor(WS_LED[(i / 2) + j * 8], color[j], 0.2);
+				else wsSetColor(WS_LED[(i / 2) + j * 8], color[j], 0);
 			}
 		}
 	}
