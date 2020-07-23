@@ -366,21 +366,32 @@ void RUN_FFT(void) {
 void wsUpdateMag(void) {
 	u8 i, j;
 	u8 level;
+	u8 color[9][3] = {
+			{0, 255, 0},
+			{128, 255, 0},
+			{200, 255, 0},
+			{255, 255, 0},
+			{200, 255, 0},
+			{255, 200, 0},
+			{255, 128, 0},
+			{255, 80, 0},
+			{255, 0, 0}
+		};
 	for(i = 1; i < 16; i += 1) {
 		if(i%2 == 0) {
-			if(OutputSignal[i] < 4) level = 1;
-			else if(OutputSignal[i] < 3) level = 2;
-			else if(OutputSignal[i] <6) level = 3;
-			else if(OutputSignal[i] <9) level = 4;
-			else if(OutputSignal[i] <12) level = 5;
-			else if(OutputSignal[i] <15) level = 6;
-			else if(OutputSignal[i] <18) level = 7;
-			else if(OutputSignal[i] <21) level = 8;
+			if(OutputSignal[i] < 3) 		 level = 1;
+			else if(OutputSignal[i] <5)  level = 2;
+			else if(OutputSignal[i] <8)  level = 3;
+			else if(OutputSignal[i] <11) level = 4;
+			else if(OutputSignal[i] <14) level = 5;
+			else if(OutputSignal[i] <17) level = 6;
+			else if(OutputSignal[i] <20) level = 7;
+			else if(OutputSignal[i] <23) level = 8;
 			else level = 9;
 			
 			for(j = 0; j < 9; j++) {
-				if(j < level) wsSetColor(WS_LED[(i/2) + j*8], ws_white, 0.2);
-				else wsSetColor(WS_LED[(i/2) + j*8], ws_white, 0);
+				if(j < level) wsSetColor(WS_LED[(i/2) + j*8], color[j], 0.2);
+				else wsSetColor(WS_LED[(i/2) + j*8], color[j], 0);
 			}
 		}
 	}
