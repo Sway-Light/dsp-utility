@@ -126,7 +126,7 @@ void ADC_IRQHandler(void) {
 		ADC_ClearIntPendingBit(HT_ADC0, ADC_FLAG_CYCLE_EOC);
 		gADC_CycleEndOfConversion = TRUE;
 		gADC_Result = (HT_ADC0->DR[0] & 0x0FFF) - 2048;
-		gADC_Result *= 50;
+		gADC_Result *= 32;
 	}
 }
 
@@ -140,11 +140,17 @@ void GPTM0_IRQHandler(void) {
 	}
 }
 
+
 void GPTM1_IRQHandler(void) {
 	extern u16 i;
-	i = 0;
+	extern bool startShow, sampleFlag, initFlag;
 	TM_ClearFlag(HT_GPTM1, TM_FLAG_UEV);
-	wsShow();
+	if (startShow == TRUE || initFlag == FALSE) {
+		wsShow();
+		startShow = FALSE;
+		i = 0;
+		sampleFlag = FALSE;
+	}
 }
 
 /**

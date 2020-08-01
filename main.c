@@ -113,7 +113,7 @@ vu32 gADC_CycleEndOfConversion;
 /* -------------------------------------------------------------------
 * External Input and Output buffer Declarations for FFT Bin Example
 * ------------------------------------------------------------------- */
-bool sampleFlag = FALSE;
+bool sampleFlag = FALSE, startShow = FALSE, initFlag = FALSE;
 s32 InputSignal[TEST_LENGTH_SAMPLES];
 float32_t fftData[TEST_LENGTH_SAMPLES];
 static float32_t OutputSignal[TEST_LENGTH_SAMPLES / 2];
@@ -175,9 +175,8 @@ int main(void) {
 		wsSetColor(WS_LED[j], ws_white, 0);
 		delay(20000);
 	}
-	
+	initFlag = TRUE;
 	while(1) {                             /* main function does not return */
-//		static u8 wsCount = 0;
 		ADC_MainRoutine();
 		if (sampleFlag) {
 			for (j = 0; j < TEST_LENGTH_SAMPLES; j += 1) fftData[j] = ((float)InputSignal[j]) / 2048.0;
@@ -185,13 +184,8 @@ int main(void) {
 			printf("\r");
 			for (j = 1; j < 32; j += 1) {
 				printf("%6.0f ", OutputSignal[j]);
-//				if(j%4 == 0) {
-//					wsSetColor(j/4, ws_white, (float)(OutputSignal[j]/35));
-//				}
 			}
 			wsUpdateMag();
-			i = 0;
-			sampleFlag = FALSE;
 		}
 	}
 }
@@ -256,7 +250,7 @@ void ADC_Configuration(void) {
 
 	{ /* ADC related settings                                                                                 */
 		/* CK_ADC frequency is set to (CK_AHB / 64)                                                             */
-		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV16);
+		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV32);
 
 		/* One Shot mode, sequence length = 3                                                                   */
 		ADC_RegularGroupConfig(HT_ADC0, ONE_SHOT_MODE, 1, 0);
@@ -296,7 +290,7 @@ void TM_Configuration(void) {
 
 	{ /* Time base configuration                                                                              */
 		TM_TimeBaseInitTypeDef TimeBaseInit;
-		TimeBaseInit.Prescaler = (SystemCoreClock / 160000) - 1;
+		TimeBaseInit.Prescaler = (SystemCoreClock / 80000) - 1;
 		TimeBaseInit.CounterReload = 4 - 1;
 		TimeBaseInit.RepetitionCounter = 0;
 		TimeBaseInit.CounterMode = TM_CNT_MODE_UP;
@@ -377,24 +371,24 @@ void wsUpdateMag(void) {
 			{255, 80, 0},
 			{255, 0, 0}
 		};
-	for (i = 1; i < 16; i += 1) {
-		if(i % 2 == 0) {
-			if (OutputSignal[i] < 3) level = 1;
-			else if(OutputSignal[i] < 5) level = 2;
-			else if(OutputSignal[i] < 8) level = 3;
-			else if(OutputSignal[i] < 11) level = 4;
-			else if(OutputSignal[i] < 14) level = 5;
-			else if(OutputSignal[i] < 17) level = 6;
-			else if(OutputSignal[i] < 20) level = 7;
-			else if(OutputSignal[i] < 23) level = 8;
-			else level = 9;
-			
-			for (j = 0; j < 9; j++) {
-				if (j < level) wsSetColor(WS_LED[(i / 2) + j * 8], color[j], 0.2);
-				else wsSetColor(WS_LED[(i / 2) + j * 8], color[j], 0);
-			}
+	for (i = 0; i < 8; i += 1) {
+		if (OutputSignal[i] < 3) level = 1;
+		else if(OutputSignal[i] < 5) level = 2;
+		else if(OutputSignal[i] < 8) level = 3;
+		else if(OutputSignal[i] < 11) level = 4;
+		else if(OutputSignal[i] < 14) level = 5;
+		else if(OutputSignal[i] < 17) level = 6;
+		else if(OutputSignal[i] < 20) level = 7;
+		else if(OutputSignal[i] < 23) level = 8;
+		else level = 9;
+		
+		for (j = 0; j < 9; j++) {
+			if (j < level) wsSetColor(WS_LED[i + j * 8], color[j], 0.2);
+			else wsSetColor(WS_LED[i + j * 8], color[j], 0);
 		}
 	}
+	
+	startShow = TRUE;
 }
 
 void delay(u32 d) {
