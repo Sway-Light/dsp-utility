@@ -125,16 +125,17 @@ uint32_t fftSize = TEST_LENGTH_SAMPLES / 2;
 uint32_t ifftFlag = 0;
 uint32_t doBitReverse = 1;
 
-const u8 WS_LED[72] = {
-	 7, 6, 5, 4, 3, 2, 1, 0,
-	 8, 9,10,11,12,13,14,15,
-	23,22,21,20,19,18,17,16,
-	24,25,26,27,28,29,30,31,
-	39,38,37,36,35,34,33,32,
-	40,41,42,43,44,45,46,47,
-	55,54,53,52,51,50,49,48,
-	56,57,58,59,60,61,62,63,
-	71,70,69,68,67,66,65,64};
+const u8 WS_LED[144] = {
+	 15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0,
+	 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+	 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32,
+	 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+	 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64,
+	 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+	111,110,109,108,107,106,105,104,103,102,101,100, 99, 98, 97, 96,
+	112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
+	143,142,141,140,139,138,137,136,135,134,133,132,131,130,129,128
+};
 
 u8 ws_white[3] = {255, 255, 255};
 u16 i = 0;
@@ -163,7 +164,7 @@ int main(void) {
 	TM_Cmd(HT_GPTM0, ENABLE);
 	
 	printf("\r\n");
-	for(j = 0; j < 31; j++) printf("%5.2fk ", 0.6 + 0.63 * j);
+	for(j = 0; j < 31; j++) printf("%5.2fk ", 0.3 + 0.32 * j);
 	printf("\r\n");
 	
 	//wsBlinkAll(300);
@@ -371,20 +372,20 @@ void wsUpdateMag(void) {
 			{255, 80, 0},
 			{255, 0, 0}
 		};
-	for (i = 0; i < 8; i += 1) {
-		if (OutputSignal[i] < 3) level = 1;
-		else if(OutputSignal[i] < 5) level = 2;
-		else if(OutputSignal[i] < 8) level = 3;
-		else if(OutputSignal[i] < 11) level = 4;
-		else if(OutputSignal[i] < 14) level = 5;
-		else if(OutputSignal[i] < 17) level = 6;
-		else if(OutputSignal[i] < 20) level = 7;
-		else if(OutputSignal[i] < 23) level = 8;
-		else level = 9;
+	for (i = 0; i < 16; i += 1) {
+		if (OutputSignal[i + 1] < 3) level = 1;
+		else if(OutputSignal[i + 1] < 5) level = 2;
+		else if(OutputSignal[i + 1] < 8) level = 3;
+		else if(OutputSignal[i + 1] < 11) level = 4;
+		else if(OutputSignal[i + 1] < 14) level = 5;
+		else if(OutputSignal[i + 1] < 17) level = 6;
+		else if(OutputSignal[i + 1] < 20) level = 7;
+		else level = 8;
+		//else level = 9;
 		
-		for (j = 0; j < 9; j++) {
-			if (j < level) wsSetColor(WS_LED[i + j * 8], color[j], 0.2);
-			else wsSetColor(WS_LED[i + j * 8], color[j], 0);
+		for (j = 0; j < 8; j++) {
+			if (j < level) wsSetColor(WS_LED[i + j * 16], color[j], 0.2);
+			else wsSetColor(WS_LED[i + j * 16], color[j], 0);
 		}
 	}
 	
