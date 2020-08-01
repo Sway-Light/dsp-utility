@@ -251,7 +251,7 @@ void ADC_Configuration(void) {
 
 	{ /* ADC related settings                                                                                 */
 		/* CK_ADC frequency is set to (CK_AHB / 64)                                                             */
-		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV32);
+		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV64);
 
 		/* One Shot mode, sequence length = 3                                                                   */
 		ADC_RegularGroupConfig(HT_ADC0, ONE_SHOT_MODE, 1, 0);
@@ -291,7 +291,7 @@ void TM_Configuration(void) {
 
 	{ /* Time base configuration                                                                              */
 		TM_TimeBaseInitTypeDef TimeBaseInit;
-		TimeBaseInit.Prescaler = (SystemCoreClock / 80000) - 1;
+		TimeBaseInit.Prescaler = (SystemCoreClock / 10000) - 1;
 		TimeBaseInit.CounterReload = 4 - 1;
 		TimeBaseInit.RepetitionCounter = 0;
 		TimeBaseInit.CounterMode = TM_CNT_MODE_UP;
