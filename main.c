@@ -157,11 +157,6 @@ int main(void) {
 	ADC_Configuration();
 
 	TM_Configuration();
-
-	ADC_Cmd(HT_ADC0, ENABLE);
-
-	/* Enable TM which will trigger ADC start of conversion periodically                                      */
-	TM_Cmd(HT_GPTM0, ENABLE);
 	
 	printf("\r\n");
 	for(j = 0; j < 31; j++) printf("%5.2fk ", 0.3 + 0.32 * j);
@@ -170,13 +165,19 @@ int main(void) {
 	//wsBlinkAll(300);
 	for(j = 0; j < WS_PIXEL; j++) {
 		wsSetColor(WS_LED[j], ws_white, 0.1);
-		delay(20000);
+		delay(10000);
 	}
 	for(j = 0; j < WS_PIXEL; j++) {
 		wsSetColor(WS_LED[j], ws_white, 0);
-		delay(20000);
+		delay(10000);
 	}
+	
 	initFlag = TRUE;
+	
+	ADC_Cmd(HT_ADC0, ENABLE);
+
+	/* Enable TM which will trigger ADC start of conversion periodically                                      */
+	TM_Cmd(HT_GPTM0, ENABLE);
 	while(1) {                             /* main function does not return */
 		ADC_MainRoutine();
 		if (sampleFlag) {
@@ -251,7 +252,7 @@ void ADC_Configuration(void) {
 
 	{ /* ADC related settings                                                                                 */
 		/* CK_ADC frequency is set to (CK_AHB / 64)                                                             */
-		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV64);
+		CKCU_SetADCnPrescaler(CKCU_ADCPRE_ADC0, CKCU_ADCPRE_DIV32);
 
 		/* One Shot mode, sequence length = 3                                                                   */
 		ADC_RegularGroupConfig(HT_ADC0, ONE_SHOT_MODE, 1, 0);
@@ -291,8 +292,8 @@ void TM_Configuration(void) {
 
 	{ /* Time base configuration                                                                              */
 		TM_TimeBaseInitTypeDef TimeBaseInit;
-		TimeBaseInit.Prescaler = (SystemCoreClock / 10000) - 1;
-		TimeBaseInit.CounterReload = 4 - 1;
+		TimeBaseInit.Prescaler = (SystemCoreClock / 27000) - 1;
+		TimeBaseInit.CounterReload = 6 - 1;
 		TimeBaseInit.RepetitionCounter = 0;
 		TimeBaseInit.CounterMode = TM_CNT_MODE_UP;
 		TimeBaseInit.PSCReloadTime = TM_PSC_RLD_IMMEDIATE;
@@ -309,7 +310,7 @@ void TM_Configuration(void) {
 		OutInit.PolarityN = TM_CHP_NONINVERTED;
 		OutInit.IdleState = MCTM_OIS_LOW;
 		OutInit.IdleStateN = MCTM_OIS_HIGH;
-		OutInit.Compare = 2 - 1;
+		OutInit.Compare = 3 - 1;
 		OutInit.AsymmetricCompare = 0;
 		TM_OutputInit(HT_GPTM0, &OutInit);
 	}

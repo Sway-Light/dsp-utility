@@ -140,8 +140,8 @@ void GPTM0_IRQHandler(void) {
 	}
 }
 
-u32 time = 0;
-bool startCount = FALSE;
+//u32 time = 0;
+//bool startCount = FALSE;
 void GPTM1_IRQHandler(void) {
 	extern u16 i;
 	extern bool startShow, sampleFlag, initFlag;
@@ -150,17 +150,17 @@ void GPTM1_IRQHandler(void) {
 		wsShow();
 		startShow = FALSE;
 		i = 0;
-		startCount = TRUE;
+//		startCount = TRUE;
 		sampleFlag = FALSE;
 	}
-	if (startCount) {
-		time += 1;
-		if (i >= 128) {
-			printf("ADC Sampling spends %d ms", time / 2);
-			time = 0;
-			startCount = FALSE;
-		}
-	}
+//	if (startCount || initFlag == FALSE) {
+//		time += 1;
+//		if (i >= 128) {
+//			printf("ADC Sampling spends %d ms", time / 2);
+//			time = 0;
+//			startCount = FALSE;
+//		}
+//	}
 }
 
 /**
