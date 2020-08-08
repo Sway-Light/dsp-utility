@@ -158,9 +158,9 @@ int main(void) {
 
 	TM_Configuration();
 	
-	printf("\r\n");
-	for(j = 0; j < 31; j++) printf("%5.2fk ", 0.3 + 0.32 * j);
-	printf("\r\n");
+//	printf("\r\n");
+//	for(j = 0; j < 31; j++) printf("%5.2fk ", 0.3 + 0.32 * j);
+//	printf("\r\n");
 	
 	//wsBlinkAll(300);
 	for(j = 0; j < WS_PIXEL; j++) {
@@ -183,11 +183,12 @@ int main(void) {
 		if (sampleFlag) {
 			for (j = 0; j < TEST_LENGTH_SAMPLES; j += 1) fftData[j] = ((float)InputSignal[j]) / 2048.0;
 			RUN_FFT();
-			printf("\r");
-			for (j = 1; j < 32; j += 1) {
-				printf("%6.0f ", OutputSignal[j]);
-			}
+//			printf("\r");
+//			for (j = 1; j < 32; j += 1) {
+//				printf("%6.0f ", OutputSignal[j]);
+//			}
 			wsUpdateMag();
+			delay(100);
 		}
 	}
 }
@@ -292,7 +293,7 @@ void TM_Configuration(void) {
 
 	{ /* Time base configuration                                                                              */
 		TM_TimeBaseInitTypeDef TimeBaseInit;
-		TimeBaseInit.Prescaler = (SystemCoreClock / 27000) - 1;
+		TimeBaseInit.Prescaler = (SystemCoreClock / 21000) - 1;
 		TimeBaseInit.CounterReload = 6 - 1;
 		TimeBaseInit.RepetitionCounter = 0;
 		TimeBaseInit.CounterMode = TM_CNT_MODE_UP;
